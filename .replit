@@ -3,6 +3,7 @@ modules = ["nodejs-20", "web"]
 
 [nix]
 channel = "stable-25_05"
+packages = ["eas-cli"]
 
 [deployment]
 deploymentTarget = "cloudrun"
@@ -73,3 +74,6 @@ task = "shell.exec"
 args = "npm run expo:dev"
 waitForPort = 8081
 ensurePreviewReachable = "/status"
+
+[objectStorage]
+defaultBucketID = "replit-objstore-5f742f13-36de-4c5f-bfd9-642344b72418"
