@@ -5,6 +5,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
+import { Feather } from "@expo/vector-icons";
 import { ThemedText } from "@/components/ThemedText";
 import { PlatformIcon } from "@/components/PlatformIcon";
 import { ProfitIndicator } from "@/components/ProfitIndicator";
@@ -88,41 +89,53 @@ export function TripCard({ trip, onPress }: TripCardProps) {
 
       <View style={styles.metricsRow}>
         <View style={styles.metric}>
-          <ThemedText
-            style={[styles.metricLabel, { color: theme.textSecondary }]}
-          >
-            Dojazd
-          </ThemedText>
+          <View style={styles.metricHeader}>
+            <Feather name="navigation" size={10} color={theme.textSecondary} />
+            <ThemedText
+              style={[styles.metricLabel, { color: theme.textSecondary }]}
+            >
+              Dojazd
+            </ThemedText>
+          </View>
           <ThemedText style={styles.metricValue}>
             {trip.pickupDistance.toFixed(1)} km
           </ThemedText>
         </View>
         <View style={styles.metric}>
-          <ThemedText
-            style={[styles.metricLabel, { color: theme.textSecondary }]}
-          >
-            Kurs
-          </ThemedText>
+          <View style={styles.metricHeader}>
+            <Feather name="map" size={10} color={theme.textSecondary} />
+            <ThemedText
+              style={[styles.metricLabel, { color: theme.textSecondary }]}
+            >
+              Kurs
+            </ThemedText>
+          </View>
           <ThemedText style={styles.metricValue}>
             {trip.tripDistance.toFixed(1)} km
           </ThemedText>
         </View>
         <View style={styles.metric}>
-          <ThemedText
-            style={[styles.metricLabel, { color: theme.textSecondary }]}
-          >
-            Brutto
-          </ThemedText>
+          <View style={styles.metricHeader}>
+            <Feather name="dollar-sign" size={10} color={theme.textSecondary} />
+            <ThemedText
+              style={[styles.metricLabel, { color: theme.textSecondary }]}
+            >
+              Brutto
+            </ThemedText>
+          </View>
           <ThemedText style={styles.metricValue}>
             {trip.grossEarnings.toFixed(0)} zl
           </ThemedText>
         </View>
         <View style={styles.metric}>
-          <ThemedText
-            style={[styles.metricLabel, { color: theme.textSecondary }]}
-          >
-            Zysk/km
-          </ThemedText>
+          <View style={styles.metricHeader}>
+            <Feather name="trending-up" size={10} color={profitColor} />
+            <ThemedText
+              style={[styles.metricLabel, { color: theme.textSecondary }]}
+            >
+              Zysk/km
+            </ThemedText>
+          </View>
           <ThemedText style={[styles.metricValue, { color: profitColor }]}>
             {trip.profitPerKm.toFixed(2)} zl
           </ThemedText>
@@ -177,10 +190,18 @@ const styles = StyleSheet.create({
   },
   metric: {
     alignItems: "center",
+    flex: 1,
+  },
+  metricHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginBottom: 2,
   },
   metricLabel: {
-    fontSize: 11,
-    marginBottom: 2,
+    fontSize: 10,
+    fontWeight: "500",
+    textTransform: "uppercase",
   },
   metricValue: {
     fontSize: 14,

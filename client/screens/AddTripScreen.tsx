@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 import { KeyboardAwareScrollViewCompat } from "@/components/KeyboardAwareScrollViewCompat";
@@ -128,13 +129,19 @@ export default function AddTripScreen() {
         paddingHorizontal: Spacing.lg,
       }}
     >
-      <ThemedText style={styles.sectionTitle}>Platforma</ThemedText>
+      <View style={styles.sectionHeader}>
+        <Feather name="layers" size={18} color={theme.textSecondary} />
+        <ThemedText style={styles.sectionTitle}>Platforma</ThemedText>
+      </View>
       <PlatformSelector
         selectedPlatform={platform}
         onSelectPlatform={setPlatform}
       />
 
-      <ThemedText style={styles.sectionTitle}>Dane dojazdu</ThemedText>
+      <View style={styles.sectionHeader}>
+        <Feather name="navigation" size={18} color={theme.textSecondary} />
+        <ThemedText style={styles.sectionTitle}>Dane dojazdu</ThemedText>
+      </View>
       <View
         style={[
           styles.inputCard,
@@ -167,7 +174,10 @@ export default function AddTripScreen() {
         </View>
       </View>
 
-      <ThemedText style={styles.sectionTitle}>Dane kursu</ThemedText>
+      <View style={styles.sectionHeader}>
+        <Feather name="map" size={18} color={theme.textSecondary} />
+        <ThemedText style={styles.sectionTitle}>Dane kursu</ThemedText>
+      </View>
       <View
         style={[
           styles.inputCard,
@@ -302,12 +312,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.sm,
+    marginTop: Spacing.xl,
+    marginBottom: Spacing.md,
+  },
   sectionTitle: {
     fontSize: 14,
     fontWeight: "600",
-    marginBottom: Spacing.md,
-    marginTop: Spacing.xl,
     opacity: 0.7,
+    marginTop: 0,
+    marginBottom: 0,
   },
   inputCard: {
     padding: Spacing.lg,

@@ -22,15 +22,26 @@ export function MetricCard({
 
   return (
     <View
-      style={[styles.container, { backgroundColor: theme.backgroundDefault }]}
+      style={[
+        styles.container,
+        {
+          backgroundColor: theme.backgroundDefault,
+          borderLeftWidth: 4,
+          borderLeftColor: color,
+        },
+      ]}
     >
-      <View style={[styles.iconContainer, { backgroundColor: color + "20" }]}>
-        <Feather name={icon} size={18} color={color} />
+      <View style={styles.content}>
+        <View style={[styles.iconContainer, { backgroundColor: color + "15" }]}>
+          <Feather name={icon} size={20} color={color} />
+        </View>
+        <View style={styles.textContainer}>
+          <ThemedText style={[styles.label, { color: theme.textSecondary }]}>
+            {label}
+          </ThemedText>
+          <ThemedText style={styles.value}>{value}</ThemedText>
+        </View>
       </View>
-      <ThemedText style={[styles.label, { color: theme.textSecondary }]}>
-        {label}
-      </ThemedText>
-      <ThemedText style={styles.value}>{value}</ThemedText>
     </View>
   );
 }
@@ -39,23 +50,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: Spacing.md,
-    borderRadius: BorderRadius.sm,
-    alignItems: "flex-start",
+    borderRadius: BorderRadius.xs,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  content: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.md,
   },
   iconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: BorderRadius.xs,
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.full,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: Spacing.sm,
+  },
+  textContainer: {
+    flex: 1,
+    gap: 2,
   },
   label: {
-    fontSize: 12,
-    marginBottom: Spacing.xs,
+    fontSize: 11,
+    fontWeight: "500",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   value: {
-    fontSize: 16,
-    fontWeight: "600",
+    fontSize: 18,
+    fontWeight: "700",
   },
 });
