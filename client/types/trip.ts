@@ -19,6 +19,8 @@ export interface Trip {
 export interface TripWithCalculations extends Trip {
   netEarnings: number;
   fuelCost: number;
+  maintenanceCost: number;
+  opportunityCost: number;
   profitPerKm: number;
   profitPerHour: number;
   profitability: ProfitabilityLevel;
@@ -27,6 +29,8 @@ export interface TripWithCalculations extends Trip {
 export interface DriverSettings {
   fuelConsumption: number;
   fuelPrice: number;
+  maintenanceCostPerKm: number;
+  minHourlyWage: number;
   uberPercentage: number;
   boltPercentage: number;
   freenowPercentage: number;
@@ -38,6 +42,8 @@ export interface DriverSettings {
 export const DEFAULT_SETTINGS: DriverSettings = {
   fuelConsumption: 8.0,
   fuelPrice: 6.5,
+  maintenanceCostPerKm: 0.3,
+  minHourlyWage: 25,
   uberPercentage: 75,
   boltPercentage: 80,
   freenowPercentage: 78,
@@ -73,18 +79,23 @@ export function calculateTripDetails(
   settings: DriverSettings
 ): TripWithCalculations {
   const totalDistance = trip.pickupDistance + trip.tripDistance;
+  const totalTime = trip.pickupTime + trip.tripTime;
+
   const fuelCost =
     (totalDistance / 100) * settings.fuelConsumption * settings.fuelPrice;
-  const netEarnings =
-    trip.grossEarnings * (trip.driverPercentage / 100) - fuelCost;
-  const totalTime = trip.pickupTime + trip.tripTime;
+  const maintenanceCost = totalDistance * settings.maintenanceCostPerKm;
+  const opportunityCost = (totalTime / 60) * settings.minHourlyWage;
+
+  const grossAfterPlatform = trip.grossEarnings * (trip.driverPercentage / 100);
+  const netEarnings = grossAfterPlatform - fuelCost - maintenanceCost;
+
   const profitPerKm = totalDistance > 0 ? netEarnings / totalDistance : 0;
   const profitPerHour = totalTime > 0 ? (netEarnings / totalTime) * 60 : 0;
 
   let profitability: ProfitabilityLevel;
-  if (profitPerKm >= 1.5) {
+  if (profitPerKm >= 1.5 && profitPerHour >= settings.minHourlyWage) {
     profitability = "profit";
-  } else if (profitPerKm >= 0.8) {
+  } else if (profitPerKm >= 0.8 && profitPerHour >= settings.minHourlyWage * 0.7) {
     profitability = "marginal";
   } else {
     profitability = "loss";
@@ -94,6 +105,8 @@ export function calculateTripDetails(
     ...trip,
     netEarnings,
     fuelCost,
+    maintenanceCost,
+    opportunityCost,
     profitPerKm,
     profitPerHour,
     profitability,

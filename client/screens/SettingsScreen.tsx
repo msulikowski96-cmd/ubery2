@@ -101,7 +101,7 @@ export default function SettingsScreen() {
         />
       </View>
 
-      <ThemedText style={styles.sectionTitle}>Ustawienia paliwa</ThemedText>
+      <ThemedText style={styles.sectionTitle}>Ustawienia paliwa i eksploatacji</ThemedText>
       <View
         style={[
           styles.settingsCard,
@@ -126,6 +126,26 @@ export default function SettingsScreen() {
             updateSetting("fuelPrice", parseFloat(text) || 0)
           }
           suffix="zl/l"
+          keyboardType="decimal-pad"
+        />
+        <InputField
+          label="Koszt eksploatacji"
+          icon="tool"
+          value={settings.maintenanceCostPerKm.toString()}
+          onChangeText={(text) =>
+            updateSetting("maintenanceCostPerKm", parseFloat(text) || 0)
+          }
+          suffix="zl/km"
+          keyboardType="decimal-pad"
+        />
+        <InputField
+          label="Minimalna stawka godz."
+          icon="clock"
+          value={settings.minHourlyWage.toString()}
+          onChangeText={(text) =>
+            updateSetting("minHourlyWage", parseFloat(text) || 0)
+          }
+          suffix="zl/h"
           keyboardType="decimal-pad"
         />
       </View>
