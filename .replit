@@ -12,14 +12,11 @@ run = ["npm", "run", "server:prod"]
 
 [[ports]]
 localPort = 5000
-externalPort = 80
-
-[[ports]]
-localPort = 8080
+externalPort = 5000
 
 [[ports]]
 localPort = 8081
-externalPort = 8081
+externalPort = 80
 
 [[ports]]
 localPort = 8082
@@ -33,7 +30,7 @@ stack = "EXPO"
 expertMode = true
 
 [workflows]
-runButton = "Start Backend"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
@@ -43,10 +40,6 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "workflow.run"
 args = "Start App"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Start Backend"
 
 [[workflows.workflow]]
 name = "Start App"
@@ -71,8 +64,16 @@ task = "shell.exec"
 args = "npm run server:dev"
 waitForPort = 5000
 
-[workflows.workflow.metadata]
-outputType = "webview"
+[[workflows.workflow]]
+name = "Start Frontend"
+author = "agent"
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run expo:dev"
+waitForPort = 8081
+ensurePreviewReachable = "/status"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-5f742f13-36de-4c5f-bfd9-642344b72418"
