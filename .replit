@@ -16,7 +16,6 @@ externalPort = 80
 
 [[ports]]
 localPort = 8080
-externalPort = 8080
 
 [[ports]]
 localPort = 8081
@@ -34,7 +33,7 @@ stack = "EXPO"
 expertMode = true
 
 [workflows]
-runButton = "Project"
+runButton = "Start Backend"
 
 [[workflows.workflow]]
 name = "Project"
