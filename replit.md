@@ -15,10 +15,14 @@ RideCalc Pro to aplikacja mobilna stworzona dla kierowców platform przewozowych
 - **Storage**: AsyncStorage (lokalne przechowywanie danych)
 - **Navigation**: React Navigation (bottom tabs + stack)
 - **Styling**: Custom theme system z ciemnym motywem dashboard
+- **Android Auto**: react-native-carplay (obsługa ekranów samochodowych)
 
 ## Project Structure
 ```
 client/
+├── androidAuto/       # Android Auto integration
+│   ├── AndroidAutoApp.tsx  # Android Auto screen templates
+│   └── index.ts
 ├── components/         # Reusable UI components
 │   ├── EmptyState.tsx
 │   ├── FilterChip.tsx
@@ -41,6 +45,12 @@ client/
 ├── lib/               # Storage utilities
 ├── types/             # TypeScript types
 └── constants/         # Theme and design tokens
+
+android/
+├── app/src/main/
+│   ├── AndroidManifest.xml  # Android Auto service config
+│   └── res/xml/
+│       └── automotive_app_desc.xml  # Android Auto descriptor
 ```
 
 ## Color Scheme
@@ -61,7 +71,22 @@ client/
 - Ciemny motyw zoptymalizowany do jazdy nocą
 - Wibracje haptic przy kluczowych akcjach
 
+## Android Auto
+Aplikacja obsługuje wyświetlanie na ekranach Android Auto z następującymi funkcjami:
+- Dashboard - podgląd dziennych zarobków
+- New Trip - rozpoczęcie nowego kursu
+- History - historia kursów
+- Settings - ustawienia aplikacji
+
+Aby zbudować aplikację z Android Auto:
+```bash
+npx expo run:android
+```
+
 ## Recent Changes
+- Added Android Auto support with react-native-carplay library
+- Created Android Auto screen templates (ListTemplate)
+- Updated AndroidManifest.xml with Android Auto service
 - Initial MVP release with Dashboard, History, Settings, and Trip management screens
 - Local storage implementation for trips and settings
 - Polish language interface
