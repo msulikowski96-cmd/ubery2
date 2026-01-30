@@ -17,4 +17,20 @@ export const insertUserSchema = createInsertSchema(users).pick({
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export const rides = pgTable("rides", {
+  id: varchar("id")
+    .primaryKey()
+    .default(sql`gen_random_uuid()`),
+  driverId: text("driver_id").notNull(),
+  startToClientAt: text("start_to_client_at"),
+  endToClientAt: text("end_to_client_at"),
+  startWithClientAt: text("start_with_client_at"),
+  endWithClientAt: text("end_with_client_at"),
+  distanceToClient: text("distance_to_client"), // stored as string for simplicity in demo
+  amount: text("amount"),
+  platform: text("platform"), // Uber, Bolt, FreeNow
+});
+
+export const insertRideSchema = createInsertSchema(rides);
+export type InsertRide = z.infer<typeof insertRideSchema>;
+export type Ride = typeof rides.$inferSelect;
