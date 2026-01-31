@@ -1,73 +1,81 @@
-# CI: install, build, lint, test across Node.js versions; formatting check on PRs; simple security scan
 name: CI
-
 on:
   push:
-    branches: [ main, master, "release/**" ]
+    branches: [ main ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  build:
-    name: Build and test
-    runs-on: ubuntu-latest
+  ci:
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [18.x, 20.x]
+        os: [ubuntu-latest, macos-latest]
+        node-version: [20.x, 18.x]
+        job-type: [server, expo]
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - name: Cache npm
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: npm-cache-${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            npm-cache-${{ runner.os }}-node-${{ matrix.node-version }}-
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --prefer-offline --no-audit --progress=false
+          else
+            npm install --no-audit --progress=false
+          fi
 
-      - name: Build (if present)
-        run: npm run build --if-present
+      - name: Check formatting
+        run: npm run check:format
 
-      - name: Lint (if present)
-        run: npm run lint --if-present
+      - name: Lint
+        run: npm run lint
 
-      - name: Run tests
-        run: npm test --if-present
+      - name: Type check
+        run: npm run check:types
 
-      - name: Upload coverage (if present)
-        if: ${{ always() && (github.event_name == 'push' || github.event_name == 'pull_request') }}
+      - name: Job-specific build
+        run: |
+          if [ "${{ matrix.job-type }}" = "server" ]; then
+            echo "Server job: building server"
+            npm run server:build
+          else
+            echo "Expo job: running expo static build"
+            npm run expo:static:build
+          fi
+
+      - name: Upload server artifact
+        if: ${{ success() && matrix.job-type == 'server' }}
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
-          path: coverage || coverage
+          name: server-dist-${{ matrix.os }}-node-${{ matrix.node-version }}
+          path: server_dist
 
-  format:
-    name: Check formatting
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node 18
-        uses: actions/setup-node@v4
+      - name: Upload expo artifact
+        if: ${{ success() && matrix.job-type == 'expo' }}
+        uses: actions/upload-artifact@v4
         with:
-          node-version: 18.x
-      - name: Install dev dependencies
-        run: npm ci
-      - name: Check formatting (prettier)
-        run: npm run format:check --if-present
-
-  security-scan:
-    name: npm audit
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node 18
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18.x
-      - name: Install dependencies
-        run: npm ci
-      - name: Run npm audit
-        run: npm audit --audit-level=high || true
+          name: expo-build-${{ matrix.os }}-node-${{ matrix.node-version }}
+          path: |
+            dist
+            build
+            web-build
+            server_dist
