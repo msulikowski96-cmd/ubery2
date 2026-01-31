@@ -1,12 +1,12 @@
-import { registerRootComponent, AppRegistry } from "expo";
-import { Platform } from "react-native";
+import { registerRootComponent } from 'expo';
+import { location } from 'expo-location';
+import {  } from 'react'
+import {  } from 'react-native';
+
+
 
 import App from "@/App";
-
 registerRootComponent(App);
+location(App);
 
-if (Platform.OS === "android") {
-  import("@/androidAuto").then(({ registerAndroidAuto }) => {
-    registerAndroidAuto();
-  });
-}
+

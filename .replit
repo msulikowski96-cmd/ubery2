@@ -3,7 +3,7 @@ modules = ["nodejs-20", "web"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["eas-cli"]
+packages = ["eas-cli", "nix-output-monitor"]
 
 [deployment]
 deploymentTarget = "cloudrun"
@@ -30,7 +30,7 @@ stack = "EXPO"
 expertMode = true
 
 [workflows]
-runButton = "Project"
+runButton = "Start App"
 
 [[workflows.workflow]]
 name = "Project"

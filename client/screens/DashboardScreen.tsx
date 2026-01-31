@@ -38,7 +38,7 @@ export default function DashboardScreen() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [settings, setSettings] = useState<DriverSettings>(DEFAULT_SETTINGS);
 
-  // New tracking state
+  // Tracking state
   const [rideState, setRideState] = useState<RideState>('idle');
   const [trackingData, setTrackingData] = useState<{
     startToClientAt?: number;
@@ -53,13 +53,26 @@ export default function DashboardScreen() {
 
   const locationSubscription = useRef<Location.LocationSubscription | null>(null);
 
+  // Cleanup location subscription on unmount or state change
   useEffect(() => {
     return () => {
       if (locationSubscription.current) {
         locationSubscription.current.remove();
+        locationSubscription.current = null;
       }
     };
   }, []);
+
+  // Reset tracking when returning to idle
+  useEffect(() => {
+    if (rideState === 'idle') {
+      if (locationSubscription.current) {
+        locationSubscription.current.remove();
+        locationSubscription.current = null;
+      }
+      setTrackingData({ distanceToClient: 0 });
+    }
+  }, [rideState]);
 
   const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
     const R = 6371; // km
@@ -73,38 +86,55 @@ export default function DashboardScreen() {
   };
 
   const startTracking = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Błąd', 'Brak uprawnień do lokalizacji');
-      return;
-    }
-
-    setRideState('to_client');
-    const now = Date.now();
-    setTrackingData({
-      startToClientAt: now,
-      distanceToClient: 0,
-    });
-
-    locationSubscription.current = await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.High, distanceInterval: 10 },
-      (location) => {
-        setTrackingData(prev => {
-          if (!prev.lastLocation) return { ...prev, lastLocation: location };
-          const dist = calculateDistance(
-            prev.lastLocation.coords.latitude,
-            prev.lastLocation.coords.longitude,
-            location.coords.latitude,
-            location.coords.longitude
-          );
-          return {
-            ...prev,
-            distanceToClient: prev.distanceToClient + dist,
-            lastLocation: location
-          };
-        });
+    try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Błąd uprawnień', 'Brak uprawnień do dostępu do lokalizacji');
+        setRideState('idle');
+        return;
       }
-    );
+
+      try {
+        setRideState('to_client');
+        const now = Date.now();
+        setTrackingData({
+          startToClientAt: now,
+          distanceToClient: 0,
+        });
+
+        locationSubscription.current = await Location.watchPositionAsync(
+          { accuracy: Location.Accuracy.High, distanceInterval: 10 },
+          (location) => {
+            setTrackingData(prev => {
+              if (!prev.lastLocation) return { ...prev, lastLocation: location };
+              const dist = calculateDistance(
+                prev.lastLocation.coords.latitude,
+                prev.lastLocation.coords.longitude,
+                location.coords.latitude,
+                location.coords.longitude
+              );
+              return {
+                ...prev,
+                distanceToClient: prev.distanceToClient + dist,
+                lastLocation: location
+              };
+            });
+          }
+        );
+      } catch (gpsError) {
+        console.error('GPS Error:', gpsError);
+        Alert.alert(
+          'Błąd GPS',
+          'Nie udało się aktywować GPS. Spróbuj ręcznego wprowadzenia danych w sekcji Historia.',
+          [{ text: 'OK', onPress: () => setRideState('idle') }]
+        );
+        setRideState('idle');
+      }
+    } catch (error) {
+      console.error('Tracking Error:', error);
+      Alert.alert('Błąd', 'Nieoczekiwany błąd przy uruchamianiu śledzenia');
+      setRideState('idle');
+    }
   };
 
   const handleStopToClient = () => {
@@ -121,6 +151,10 @@ export default function DashboardScreen() {
   };
 
   const handleStopWithClient = () => {
+    if (locationSubscription.current) {
+      locationSubscription.current.remove();
+      locationSubscription.current = null;
+    }
     setRideState('finished');
     setTrackingData(prev => ({
       ...prev,
@@ -131,8 +165,10 @@ export default function DashboardScreen() {
 
   const handleSaveRide = async () => {
     const amountNum = parseFloat(finalAmount.replace(',', '.'));
-    if (isNaN(amountNum)) {
-      Alert.alert('Błąd', 'Wpisz poprawną kwotę');
+    
+    // Validate positive amount
+    if (isNaN(amountNum) || amountNum <= 0) {
+      Alert.alert('Błąd', 'Wpisz poprawną kwotę (większą niż 0)');
       return;
     }
 
@@ -144,26 +180,37 @@ export default function DashboardScreen() {
       ? Math.round((trackingData.endWithClientAt - trackingData.startWithClientAt) / 60000)
       : 0;
 
-    const newTrip: Trip = {
-      id: Date.now().toString(),
-      platform: selectedPlatform,
-      pickupDistance: trackingData.distanceToClient,
-      pickupTime,
-      tripDistance: 0, // In this simplified demo, we only track pickup distance automatically
-      tripTime,
-      grossEarnings: amountNum,
-      driverPercentage: selectedPlatform === 'uber' ? settings.uberPercentage : selectedPlatform === 'bolt' ? settings.boltPercentage : settings.freenowPercentage,
-      fuelConsumption: settings.fuelConsumption,
-      fuelPrice: settings.fuelPrice,
-      timestamp: Date.now(),
-    };
+    try {
+      const newTrip: Trip = {
+        id: Date.now().toString(),
+        platform: selectedPlatform,
+        pickupDistance: trackingData.distanceToClient,
+        pickupTime,
+        tripDistance: 0, // ⚠️ TODO: Add trip distance tracking (Phase 2)
+        tripTime,
+        grossEarnings: amountNum,
+        driverPercentage: selectedPlatform === 'uber' ? settings.uberPercentage : selectedPlatform === 'bolt' ? settings.boltPercentage : settings.freenowPercentage,
+        fuelConsumption: settings.fuelConsumption,
+        fuelPrice: settings.fuelPrice,
+        timestamp: Date.now(),
+      };
 
-    await saveTrip(newTrip);
-    setShowAmountModal(false);
-    setRideState('idle');
-    setFinalAmount("");
-    loadData();
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await saveTrip(newTrip);
+      
+      // Reset state
+      setShowAmountModal(false);
+      setRideState('idle');
+      setFinalAmount("");
+      
+      // Reload data
+      await loadData();
+      
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert('Sukces', 'Kurs został zapisany');
+    } catch (error) {
+      console.error('Save Error:', error);
+      Alert.alert('Błąd', 'Nie udało się zapisać kursu. Spróbuj ponownie.');
+    }
   };
 
   useFocusEffect(
@@ -210,11 +257,11 @@ export default function DashboardScreen() {
   );
 
   const samplePreviewData = {
-    pickupDistance: 2.5,
-    pickupTime: 8,
-    tripDistance: 12.3,
-    tripTime: 22,
-    earnings: 35.5,
+    pickupDistance: 3.0,
+    pickupTime: 10,
+    tripDistance: 15.0,
+    tripTime: 25,
+    earnings: 40.0,
   };
 
   const sampleTripForPreview: Trip = {
@@ -292,7 +339,7 @@ export default function DashboardScreen() {
             <TextInput
               style={[styles.input, { color: theme.text, borderColor: theme.border }]}
               placeholder="0.00"
-              keyboardType="numeric"
+              keyboardType="decimal-pad"
               value={finalAmount}
               onChangeText={setFinalAmount}
               autoFocus
@@ -349,7 +396,7 @@ export default function DashboardScreen() {
         <ToggleSwitch value={overlayEnabled} onValueChange={handleToggleOverlay} />
       </View>
 
-      <ThemedText style={styles.sectionTitle}>Podglad nakładki</ThemedText>
+      <ThemedText style={styles.sectionTitle}>Podgląd nakładki</ThemedText>
       <OverlayPreview
         platform={selectedPlatform}
         earnings={previewCalc.netEarnings}
@@ -379,7 +426,7 @@ export default function DashboardScreen() {
           <MetricCard
             icon="dollar-sign"
             label="Zarobek"
-            value={`${todayEarnings.toFixed(0)} zl`}
+            value={`${todayEarnings.toFixed(0)} zł`}
             color={AppColors.profitGreen}
           />
         </View>
@@ -394,7 +441,7 @@ export default function DashboardScreen() {
           <MetricCard
             icon="droplet"
             label="Paliwo"
-            value={`${todayFuelCost.toFixed(0)} zl`}
+            value={`${todayFuelCost.toFixed(0)} zł`}
             color={AppColors.lossRed}
           />
         </View>
@@ -410,8 +457,7 @@ export default function DashboardScreen() {
         <ThemedText
           style={[styles.infoText, { color: theme.textSecondary }]}
         >
-          Dodaj kursy w zakladce Historia, aby sledzic swoje zarobki i analizowac
-          oplacalnosc.
+          Dodaj kursy w zakładce Historia, aby śledzić swoje zarobki i analizować opłacalność.
         </ThemedText>
       </View>
     </ScrollView>
